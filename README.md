@@ -34,3 +34,34 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+votelyst/
+├─ app/                  # Next.js 13+ app directory
+│  ├─ layout.tsx         # Root layout
+│  ├─ page.tsx           # Home page (maybe list polls)
+│  ├─ globals.css        # Global styles
+│  ├─ components/        # Reusable components (Shadcn UI here)
+│  │  ├─ Navbar.tsx
+│  │  ├─ Footer.tsx
+│  │  ├─ Button.tsx
+│  │  └─ Card.tsx
+│  ├─ auth/              # Authentication pages
+│  │  ├─ login/page.tsx
+│  │  └─ register/page.tsx
+│  ├─ polls/             # Polls-related pages
+│  │  ├─ page.tsx        # List polls
+│  │  ├─ [id]/page.tsx   # Poll details
+│  │  └─ create/page.tsx # Create new poll
+│  └─ ui/                # Shadcn component wrappers & design system
+│     ├─ Alert.tsx
+│     ├─ Modal.tsx
+│     └─ Form.tsx
+├─ public/               # Static assets
+│  └─ images/
+├─ styles/
+│  └─ tailwind.css       # Tailwind base
+├─ package.json
+├─ next.config.js
+└─ tsconfig.json
