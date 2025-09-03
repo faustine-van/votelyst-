@@ -11,7 +11,7 @@ export type User = {
 // Poll type
 export type Poll = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   question: string;
   description?: string;
   created_at: string;

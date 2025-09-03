@@ -1,9 +1,11 @@
 // Database utility functions for Votelyst application
-import { supabase } from './supabase';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 import { Poll, PollOption, Vote, PollWithOptions, PollWithResults } from '../types/database';
 
 // Poll operations
-export async function createPoll(userId: string, question: string, description: string | null, options: string[]) {
+export async function createPoll(userId: string | null, question: string, description: string | null, options: string[]) {
   // Insert the poll
   const { data: poll, error: pollError } = await supabase
     .from('polls')
@@ -95,16 +97,50 @@ export async function getUserVoteCount(userId: string): Promise<number> {
   return count || 0;
 }
 
-export async function updatePoll(pollId: string, question: string, description: string | null) {
-  const { data, error } = await supabase
+export async function updatePoll(
+  pollId: string,
+  question: string,
+  description: string | null,
+  options: { id?: string; option_text: string }[],
+) {
+  // Update poll details
+  const { data: poll, error: pollError } = await supabase
     .from('polls')
     .update({ question, description })
     .eq('id', pollId)
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (pollError) throw pollError;
+
+  const existingOptions = await supabase.from('poll_options').select('id').eq('poll_id', pollId);
+  const existingOptionIds = existingOptions.data?.map(o => o.id) || [];
+
+  const optionsToUpdate = options.filter(o => o.id && existingOptionIds.includes(o.id));
+  const optionsToInsert = options.filter(o => !o.id);
+  const optionIdsToDelete = existingOptionIds.filter(id => !options.some(o => o.id === id));
+
+  // Update existing options
+  if (optionsToUpdate.length > 0) {
+    const { error: updateError } = await supabase.from('poll_options').upsert(optionsToUpdate);
+    if (updateError) throw updateError;
+  }
+
+  // Insert new options
+  if (optionsToInsert.length > 0) {
+    const { error: insertError } = await supabase
+      .from('poll_options')
+      .insert(optionsToInsert.map(o => ({ poll_id: pollId, option_text: o.option_text })));
+    if (insertError) throw insertError;
+  }
+
+  // Delete removed options
+  if (optionIdsToDelete.length > 0) {
+    const { error: deleteError } = await supabase.from('poll_options').delete().in('id', optionIdsToDelete);
+    if (deleteError) throw deleteError;
+  }
+
+  return poll;
 }
 
 export async function deletePoll(pollId: string) {

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, QrCode, Users, Zap } from 'lucide-react';
 
+
 const stats = [
   { value: '1M+', label: 'Polls Created' },
   { value: '5M+', label: 'Votes Cast' },

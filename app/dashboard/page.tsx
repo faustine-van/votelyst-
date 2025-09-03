@@ -10,51 +10,121 @@ import { SharePollDialog } from "@/components/share-poll-dialog"
 import { UserProfileCard } from "@/components/user-profile-card"
 import { DashboardAnalytics } from "@/components/dashboard-analytics"
 import { UserSettings } from "@/components/user-settings"
-import { BarChart3, Plus, Users, Eye, Share2, MoreHorizontal, TrendingUp, Settings, User, BarChart } from "lucide-react"
+import { BarChart3, Plus, Users, Eye, Share2, MoreHorizontal, TrendingUp, Settings, User, BarChart, Lock } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { supabase } from "@/app/utils/supabase"
-import { getUserPolls, getUserVoteCount } from "@/app/utils/database"
-import { type User as AuthUser } from '@supabase/supabase-js'
 import { type Poll } from "@/app/types/database"
+import { useAuth } from "@/app/context/AuthContext"
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview")
-  const [user, setUser] = useState<AuthUser | null>(null)
   const [polls, setPolls] = useState<Poll[]>([])
   const [totalVotes, setTotalVotes] = useState(0)
   const [loading, setLoading] = useState(true)
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?redirectedFrom=/dashboard');
+    }
+  }, [user, authLoading, router]);
+
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-
       if (user) {
-        const userPolls = await getUserPolls(user.id)
-        setPolls(userPolls)
-        const userVoteCount = await getUserVoteCount(user.id)
-        setTotalVotes(userVoteCount)
+        try {
+          const supabase = createClient();
+          const { data: pollsData, error: pollsError } = await supabase
+            .from('polls')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (pollsError) {
+            console.error('Error fetching polls:', pollsError);
+          } else {
+            setPolls(pollsData || []);
+          }
+
+          if (pollsData && pollsData.length > 0) {
+            const { count, error: votesError } = await supabase
+              .from('votes')
+              .select('*', { count: 'exact', head: true })
+              .in('poll_id', pollsData.map(p => p.id));
+
+            if (votesError) {
+              console.error('Error fetching votes:', votesError);
+            } else {
+              setTotalVotes(count || 0);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
       }
-      setLoading(false)
+      setLoading(false);
     }
 
-    fetchData()
-  }, [])
+    if (!authLoading) {
+      fetchData();
+    }
+  }, [user, authLoading])
 
-  const userProfile = user ? {
-      name: user.user_metadata.full_name || "Anonymous",
-      email: user.email || "",
-      avatar: user.user_metadata.avatar_url || "/professional-avatar.png",
-      bio: "Product manager passionate about user feedback and data-driven decisions.",
-      location: "San Francisco, CA",
-      joinDate: user.created_at,
-      pollsCreated: polls.length,
-      totalVotes: totalVotes,
-      tier: "pro" as const,
-  } : null
+  const handleDelete = async (pollId: string) => {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('polls').delete().eq('id', pollId);
+      if (error) throw error;
+      setPolls(polls.filter((p) => p.id !== pollId))
+    } catch (error) {
+      console.error("Error deleting poll:", error)
+    }
+  }
 
-  if (loading) {
-      return <div>Loading...</div>
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+    // Navigation will be handled by the auth state change
+  };
+
+  // Show loading state
+  if (authLoading || (user && loading)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication required
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <Lock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+          <p className="text-muted-foreground mb-6">
+            You need to be signed in to access your dashboard.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Link href="/login">
+              <Button>Sign In</Button>
+            </Link>
+            <Link href="/">
+              <Button variant="outline">Go Home</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -63,17 +133,21 @@ export default function DashboardPage() {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <BarChart3 className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">PollCraft</h1>
-            </div>
+              <h1 className="text-2xl font-bold text-foreground">Votelyst</h1>
+            </Link>
             <div className="flex items-center gap-4">
-              <Link href="/create">
+              <span className="text-sm text-muted-foreground">
+                Welcome, {user.email?.split('@')[0]}
+              </span>
+              <Link href="/polls/new">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Poll
                 </Button>
               </Link>
+              <Button onClick={handleSignOut}>Sign Out</Button>
             </div>
           </div>
         </div>
@@ -121,7 +195,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{polls.length}</div>
-                  <p className="text-xs text-muted-foreground">+2 from last month</p>
+                  <p className="text-xs text-muted-foreground">Your active polls</p>
                 </CardContent>
               </Card>
 
@@ -132,18 +206,20 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{totalVotes}</div>
-                  <p className="text-xs text-muted-foreground">+180 from last month</p>
+                  <p className="text-xs text-muted-foreground">Across all polls</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg. Response Rate</CardTitle>
+                  <CardTitle className="text-sm font-medium">Avg. Votes per Poll</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">78%</div>
-                  <p className="text-xs text-muted-foreground">+5% from last month</p>
+                  <div className="text-2xl font-bold">
+                    {polls.length > 0 ? Math.round(totalVotes / polls.length) : 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Average engagement</p>
                 </CardContent>
               </Card>
             </div>
@@ -152,7 +228,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-foreground">Your Polls</h3>
-                <Link href="/create">
+                <Link href="/polls/new">
                   <Button variant="outline">
                     <Plus className="h-4 w-4 mr-2" />
                     New Poll
@@ -160,81 +236,90 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="grid gap-4">
-                {polls.map((poll) => (
-                  <Card key={poll.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-lg text-balance">{poll.question}</CardTitle>
-                          {poll.description && (
-                            <CardDescription className="text-pretty">{poll.description}</CardDescription>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={"default"}>active</Badge>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <Link href={`/polls/${poll.id}/results`}>
-                                <DropdownMenuItem>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Results
+              {polls.length > 0 ? (
+                <div className="grid gap-4">
+                  {polls.map((poll) => (
+                    <Card key={poll.id}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 flex-1">
+                            <CardTitle className="text-lg text-balance">{poll.question}</CardTitle>
+                            {poll.description && (
+                              <CardDescription className="text-pretty">{poll.description}</CardDescription>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={"default"}>active</Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <Link href={`/polls/${poll.id}/results`}>
+                                  <DropdownMenuItem>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Results
+                                  </DropdownMenuItem>
+                                </Link>
+                                <SharePollDialog
+                                  pollId={poll.id}
+                                  pollTitle={poll.question}
+                                  pollDescription={poll.description || ""}
+                                >
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Share2 className="h-4 w-4 mr-2" />
+                                    Share Poll
+                                  </DropdownMenuItem>
+                                </SharePollDialog>
+                                <Link href={`/polls/${poll.id}/edit`}>
+                                  <DropdownMenuItem>
+                                    Edit Poll
+                                  </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(poll.id)}
+                                  className="text-red-500"
+                                >
+                                  Delete Poll
                                 </DropdownMenuItem>
-                              </Link>
-                              <SharePollDialog
-                                pollId={poll.id}
-                                pollTitle={poll.question}
-                                pollDescription={poll.description || ""}
-                              >
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                  <Share2 className="h-4 w-4 mr-2" />
-                                  Share Poll
-                                </DropdownMenuItem>
-                              </SharePollDialog>
-                              <Link href={`/polls/${poll.id}/edit`}>
-                                <DropdownMenuItem>
-                                  Edit Poll
-                                </DropdownMenuItem>
-                              </Link>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDelete(poll.id)}
-                              >
-                                Delete Poll
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {/* {poll.votes} votes */}
-                          </span>
-                          {/* <span>{poll.responses} responses</span> */}
-                        </div>
-                        <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No polls yet</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Create your first poll to get started!
+                    </p>
+                    <Link href="/polls/new">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Poll
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
-          <TabsContent value="profile" className="space-y-6">
-            {userProfile && <UserProfileCard user={userProfile} />}
+          <TabsContent value="profile">
+            <UserProfileCard user={user} />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="settings">
             <UserSettings />
           </TabsContent>
         </Tabs>
