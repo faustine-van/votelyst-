@@ -39,9 +39,9 @@ export default function Header() {
                 <span className="text-sm text-muted-foreground">
                   Welcome, {user.email?.split('@')[0]}
                 </span>
-                <Link href="/dashboard">
+                {/* <Link href="/dashboard">
                   <Button variant='outline'>Dashboard</Button>
-                </Link>
+                </Link> */}
                 <Link href="/polls">
                   <Button variant='ghost'>My Polls</Button>
                 </Link>
