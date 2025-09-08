@@ -9,11 +9,7 @@ export default function Header() {
   const { user, loading, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-    }
-    // Navigation will be handled automatically by the auth state change
+    await signOut();
   };
 
   return (
@@ -36,9 +32,7 @@ export default function Header() {
             ) : user ? (
               // Authenticated user
               <>
-                <span className="text-sm text-muted-foreground">
-                  Welcome, {user.email?.split('@')[0]}
-                </span>
+                
                 {/* <Link href="/dashboard">
                   <Button variant='outline'>Dashboard</Button>
                 </Link> */}
@@ -46,14 +40,17 @@ export default function Header() {
                   <Button variant='ghost'>My Polls</Button>
                 </Link>
                 <Button onClick={handleSignOut}>Sign Out</Button>
+                <span className="text-sm text-muted-foreground">
+                  Welcome, {user.email?.split('@')[0]}
+                </span>
               </>
             ) : (
               // Unauthenticated user
               <>
-                <Link href="/auth/login">
+                <Link href="/login">
                   <Button variant='outline'>Sign In</Button>
                 </Link>
-                <Link href="/auth/register">
+                <Link href="/register">
                   <Button>Get Started</Button>
                 </Link>
               </>

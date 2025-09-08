@@ -14,6 +14,7 @@ export type Poll = {
   user_id: string | null;
   question: string;
   description?: string;
+  requires_login: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -1,43 +1,99 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { Poll, PollOption, PollWithOptions } from '../../types/database';
 
-export async function voteOnPoll(pollId: string, formData: FormData) {
-  const optionId = formData.get('option');
-  const supabase = await createClient();
+export async function createPoll(
+  userId: string | null,
+  question: string,
+  description: string | null,
+  options: string[],
+  requires_login: boolean
+) {
+  const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Insert poll
+  const { data: poll, error: pollError } = await supabase
+    .from('polls')
+    .insert({ user_id: userId, question, description, requires_login })
+    .select()
+    .single();
+  if (pollError) throw pollError;
 
-  if (!user) {
-    return { error: 'You must be logged in to vote.' };
+  // Insert options
+  const { data: pollOptions, error: optionsError } = await supabase
+    .from('poll_options')
+    .insert(options.map(option_text => ({ poll_id: poll.id, option_text })))
+    .select();
+  if (optionsError) throw optionsError;
+
+  return { ...poll, options: pollOptions };
+}
+
+export async function getPoll(pollId: string): Promise<PollWithOptions | null> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: poll, error: pollError } = await supabase
+    .from('polls')
+    .select('*')
+    .eq('id', pollId)
+    .single();
+  if (pollError) return null;
+
+  const { data: options, error: optionsError } = await supabase
+    .from('poll_options')
+    .select('*')
+    .eq('poll_id', pollId);
+  if (optionsError) return null;
+
+  return { ...poll, options };
+}
+
+export async function updatePoll(
+  pollId: string,
+  question: string,
+  description: string | null,
+  options: { id?: string; option_text: string }[],
+  requires_login: boolean
+) {
+  const supabase = await createSupabaseServerClient();
+
+  // Update poll details
+  const { data: poll, error: pollError } = await supabase
+    .from('polls')
+    .update({ question, description, requires_login })
+    .eq('id', pollId)
+    .select()
+    .single();
+  if (pollError) throw pollError;
+
+  // Get existing option IDs
+  const { data: existingOptions } = await supabase
+    .from('poll_options')
+    .select('id')
+    .eq('poll_id', pollId);
+  const existingIds = existingOptions?.map(o => o.id) || [];
+
+  const toUpdate = options.filter(o => o.id && existingIds.includes(o.id));
+  const toInsert = options.filter(o => !o.id);
+  const toDelete = existingIds.filter(id => !options.some(o => o.id === id));
+
+  if (toUpdate.length > 0) {
+    const { error } = await supabase.from('poll_options').upsert(toUpdate);
+    if (error) throw error;
   }
 
-  if (!optionId) {
-    return { error: 'Please select an option.' };
+  if (toInsert.length > 0) {
+    const { error } = await supabase
+      .from('poll_options')
+      .insert(toInsert.map(o => ({ poll_id: pollId, option_text: o.option_text })));
+    if (error) throw error;
   }
 
-  const { error } = await supabase.from('votes').insert([
-    {
-      poll_id: pollId,
-      option_id: optionId.toString(),
-      user_id: user.id,
-    },
-  ]);
-
-  if (error) {
-    if (error.code === '23505') {
-      // unique constraint violation, user has already voted.
-      return { error: 'You have already voted on this poll.', alreadyVoted: true };
-    }
-    console.error('Error voting:', error);
-    return { error: 'An error occurred while submitting your vote.' };
+  if (toDelete.length > 0) {
+    const { error } = await supabase.from('poll_options').delete().in('id', toDelete);
+    if (error) throw error;
   }
 
-  revalidatePath(`/polls/${pollId}`);
-  revalidatePath(`/polls/${pollId}/results`);
-  
-  return { success: true };
+  return poll;
 }

@@ -1,18 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, AlertCircle, Lock, ArrowLeft, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { createPoll } from '@/app/utils/database';
+import { createPoll } from '../actions';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from 'sonner';
 import { useAuth } from '@/app/context/AuthContext';
 import Link from 'next/link';
+import { Switch } from '@/components/ui/switch';
 
 export default function NewPollPage() {
   const router = useRouter();
@@ -20,14 +21,8 @@ export default function NewPollPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [options, setOptions] = useState(['', '']);
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [allowAnonymous, setAllowAnonymous] = useState(false);
-
-  // Check if we should allow anonymous poll creation
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    setAllowAnonymous(urlParams.get('anonymous') === 'true');
-  }, []);
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -66,25 +61,19 @@ export default function NewPollPage() {
     setLoading(true);
 
     try {
-      let userId = null;
-      
-      if (user) {
-        userId = user.id;
-      } else if (allowAnonymous) {
-        // For anonymous polls, we'll use null as user_id
-        userId = null;
-      } else {
-        throw new Error('You must be logged in to create a poll.');
-      }
-
-      await createPoll(userId, title, description, filteredOptions);
-      toast.success('Poll created successfully');
-      
-      if (user) {
-        router.push('/dashboard');
-      } else {
-        // For anonymous polls, redirect to the poll itself or home
+      if (!user) {
+        if (requiresLogin) {
+          toast.error("You must be logged in to create a private poll.");
+          setLoading(false);
+          return;
+        }
+        await createPoll(null, title, description, filteredOptions, false);
+        toast.success('Poll created successfully');
         router.push('/');
+      } else {
+        await createPoll(user.id, title, description, filteredOptions, requiresLogin);
+        toast.success('Poll created successfully');
+        router.push('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -93,7 +82,6 @@ export default function NewPollPage() {
     }
   };
 
-  // Show loading state
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -105,50 +93,9 @@ export default function NewPollPage() {
     );
   }
 
-  // Show authentication required (unless anonymous is allowed)
-  if (!user && !allowAnonymous) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Header for unauthenticated users */}
-        <header className="border-b border-border bg-card">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-bold text-foreground">Create Poll</h1>
-              </div>
-           
-            </div>
-          </div>
-        </header>
-
-        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-background">
-          <div className="text-center max-w-md mx-auto">
-            <Lock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Sign In to Create Polls</h2>
-            <p className="text-muted-foreground mb-6">
-              Create an account to manage your polls and track responses.
-            </p>
-            <div className="flex gap-4 justify-center mb-6">
-              <Link href="/login?redirectedFrom=/polls/new">
-                <Button>Sign In</Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="outline">Register</Button>
-              </Link>
-            </div>
-            <div className="border-t pt-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Or create an anonymous poll (limited features)
-              </p>
-              <Link href="/polls/new?anonymous=true">
-                <Button variant="ghost">Create Anonymous Poll</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (!user) {
+    // Simplified view for non-logged in users, they can only create public polls
+    // The logic in handleSubmit ensures they can't create private polls
   }
 
   return (
@@ -167,7 +114,7 @@ export default function NewPollPage() {
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-6 w-6 text-primary" />
                 <h1 className="text-xl font-bold text-foreground">
-                  {allowAnonymous && !user ? "Create Anonymous Poll" : "Create New Poll"}
+                  {user ? "Create New Poll" : "Create Public Poll"}
                 </h1>
               </div>
             </div>
@@ -183,13 +130,13 @@ export default function NewPollPage() {
       </header>
 
       <div className="container py-8">
-        {!user && allowAnonymous && (
+        {!user && (
           <Alert className="max-w-2xl mx-auto mb-6">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Anonymous Poll</AlertTitle>
+            <AlertTitle>You are not logged in</AlertTitle>
             <AlertDescription>
-              You're creating an anonymous poll. You won't be able to edit it later or track detailed analytics. 
-              <Link href="/auth/register" className="underline ml-2">Create an account</Link> for full features.
+              You are creating a public poll. Anyone with the link will be able to vote. 
+              <Link href="/auth/login?redirectedFrom=/polls/new" className="underline ml-2">Sign in</Link> for more options.
             </AlertDescription>
           </Alert>
         )}
@@ -207,7 +154,7 @@ export default function NewPollPage() {
                     <Input
                       id="title"
                       type="text"
-                      placeholder="What\'s your question?"
+                      placeholder="What's your question?"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       required
@@ -252,6 +199,13 @@ export default function NewPollPage() {
                           Add Option
                       </Button>
                   </div>
+
+                  {user && (
+                    <div className="flex items-center space-x-2 pt-4">
+                      <Switch id="requires-login" checked={requiresLogin} onCheckedChange={setRequiresLogin} />
+                      <Label htmlFor="requires-login">Require users to log in to vote (Private Poll)</Label>
+                    </div>
+                  )}
               </fieldset>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">

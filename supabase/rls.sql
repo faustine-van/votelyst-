@@ -53,10 +53,20 @@ CREATE POLICY "Votes are viewable by everyone"
   ON votes FOR SELECT
   USING (true);
 
--- 2. Authenticated users can cast votes
-CREATE POLICY "Authenticated users can cast votes"
+-- 2. Users can cast votes based on poll requirements
+DROP POLICY IF EXISTS "Authenticated users can cast votes" ON votes;
+CREATE POLICY "Users can cast votes based on poll requirements"
   ON votes FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+    (
+      -- Case 1: Private poll (requires login)
+      (SELECT requires_login FROM polls WHERE id = votes.poll_id) = true AND
+      auth.uid() = votes.user_id
+    ) OR (
+      -- Case 2: Public poll (does not require login)
+      (SELECT requires_login FROM polls WHERE id = votes.poll_id) = false
+    )
+  );
 
 -- 3. Users can only update their own votes
 CREATE POLICY "Users can update their own votes"

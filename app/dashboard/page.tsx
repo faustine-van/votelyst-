@@ -14,11 +14,11 @@ import { BarChart3, Plus, Users, Eye, Share2, MoreHorizontal, TrendingUp, Settin
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { type Poll } from "@/app/types/database"
 import { useAuth } from "@/app/context/AuthContext"
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview")
   const [polls, setPolls] = useState<Poll[]>([])
@@ -36,7 +36,7 @@ export default function DashboardPage() {
     const fetchData = async () => {
       if (user) {
         try {
-          const supabase = createClient();
+          const supabase = createSupabaseClient();
           const { data: pollsData, error: pollsError } = await supabase
             .from('polls')
             .select('*')
@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
   const handleDelete = async (pollId: string) => {
     try {
-      const supabase = createClient();
+      const supabase = createSupabaseClient();
       const { error } = await supabase.from('polls').delete().eq('id', pollId);
       if (error) throw error;
       setPolls(polls.filter((p) => p.id !== pollId))

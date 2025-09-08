@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseClient } from "@/lib/supabase/client";
 import { PollWithOptions } from "@/app/types/database";
 
 export function usePolls() {
@@ -19,7 +19,7 @@ export function usePolls() {
       }
 
       try {
-        const supabase = createClient();
+        const supabase = createSupabaseClient();
         const { data: pollsData, error: pollsError } = await supabase
           .from("polls")
           .select("*, options:poll_options(*)")

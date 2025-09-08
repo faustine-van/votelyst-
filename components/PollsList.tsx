@@ -53,7 +53,7 @@ export function PollsList({ polls, user }: PollsListProps) {
                 {polls && polls.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {polls.map((poll: PollWithOptions) => (
-                            <Link key={poll.id} href={`/polls/results/${poll.id}`}>
+                            <Link key={poll.id} href={`/polls/${poll.id}`}>
                                 <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105">
                                     <CardHeader>
                                         <CardTitle className="text-lg line-clamp-2">{poll.question}</CardTitle>

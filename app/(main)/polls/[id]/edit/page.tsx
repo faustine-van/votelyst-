@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,16 +13,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getPoll, updatePoll } from '@/app/utils/database';
+import { getPoll, updatePoll } from '../../actions';
 import { type Poll, type PollOption } from '@/app/types/database';
 import { toast } from 'sonner';
 import { X, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import Link from 'next/link';
+import { Switch } from '@/components/ui/switch';
 
-export default function EditPollPage({ params }: { params: { id: string } }) {
+export default function EditPollPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params);
   const { user, loading: authLoading } = useAuth();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [title, setTitle] = useState('');
@@ -30,6 +31,7 @@ export default function EditPollPage({ params }: { params: { id: string } }) {
   const [options, setOptions] = useState<Partial<PollOption>[]>([{ option_text: '' }, { option_text: '' }]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requiresLogin, setRequiresLogin] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function EditPollPage({ params }: { params: { id: string } }) {
           setTitle(pollData.question);
           setDescription(pollData.description || '');
           setOptions(pollData.options || [{ option_text: '' }, { option_text: '' }]);
+          setRequiresLogin(pollData.requires_login);
         } else {
           setError('Poll not found.');
         }
@@ -113,7 +116,7 @@ export default function EditPollPage({ params }: { params: { id: string } }) {
 
     if (poll) {
       try {
-        await updatePoll(poll.id, title, description, filteredOptions);
+        await updatePoll(poll.id, title, description, filteredOptions, requiresLogin);
         toast.success('Poll updated successfully');
         router.push('/dashboard');
       } catch (error: any) {
@@ -280,6 +283,10 @@ export default function EditPollPage({ params }: { params: { id: string } }) {
                   <Button type="button" variant="outline" onClick={addOption} className="mt-2">
                     Add Option
                   </Button>
+                </div>
+                <div className="flex items-center space-x-2 pt-4">
+                  <Switch id="requires-login" checked={requiresLogin} onCheckedChange={setRequiresLogin} />
+                  <Label htmlFor="requires-login">Require users to log in to vote (Private Poll)</Label>
                 </div>
               </fieldset>
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">

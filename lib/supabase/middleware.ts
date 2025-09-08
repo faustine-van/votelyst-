@@ -1,13 +1,10 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export const updateSession = async (request: NextRequest) => {
-  // Create an unmodified response
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,92 +12,47 @@ export const updateSession = async (request: NextRequest) => {
     {
       cookies: {
         get(name: string) {
-          return request.cookies.get(name)?.value;
+          return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // If the cookie is updated, update the cookies for the request and response
           request.cookies.set({
             name,
             value,
             ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
+          })
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          supabaseResponse.cookies.set({
             name,
             value,
             ...options,
-          });
+          })
         },
         remove(name: string, options: CookieOptions) {
-          // If the cookie is removed, update the cookies for the request and response
           request.cookies.set({
             name,
-            value: "",
+            value: '',
             ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
+          })
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          supabaseResponse.cookies.set({
             name,
-            value: "",
+            value: '',
             ...options,
-          });
+          })
         },
       },
     }
-  );
+  )
 
-  // Refresh session if expired
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // refreshing the session will automatically handle detecting guest sessions and returning
+  // null if the user is not signed in
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // Define protected routes
-  const protectedRoutes = ['/dashboard', '/polls'];
-  const authRoutes = ['/login', '/register', '/reset-password'];
-  
-  const isProtectedRoute = protectedRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-  
-  const isAuthRoute = authRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  // Redirect logic
-  if (!user && isProtectedRoute) {
-    // Redirect unauthenticated users to login
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/login';
-    redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  if (user && isAuthRoute) {
-    // Redirect authenticated users away from auth pages
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/dashboard';
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Handle auth callback
-  if (request.nextUrl.pathname === '/auth/callback') {
-    const code = request.nextUrl.searchParams.get('code');
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (!error) {
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = '/dashboard';
-        redirectUrl.searchParams.delete('code');
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
-  }
-
-  return response;
-};
+  return supabaseResponse
+}

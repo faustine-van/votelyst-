@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createClient() {
+export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -35,42 +35,16 @@ export async function createClient() {
   );
 }
 
-// // Alternative function for use in Server Actions and Route Handlers
-// export async function createAdminClient() {
-//   return createServerClient(
-//     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//     process.env.SUPABASE_SERVICE_ROLE_KEY!, // Use service role key for admin operations
-//     {
-//       auth: {
-//         autoRefreshToken: false,
-//         persistSession: false
-//       }
-//     }
-//   );
-// }
-
 // Helper function to get user on server side
 export async function getUser() {
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error) {
-    console.error('Error getting user:', error);
-    return null;
-  }
-  
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
 
 // Helper function to get session on server side
 export async function getSession() {
-  const supabase = await createClient();
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error) {
-    console.error('Error getting session:', error);
-    return null;
-  }
-  
+  const supabase = await createSupabaseServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
   return session;
 }

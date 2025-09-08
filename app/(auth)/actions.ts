@@ -1,10 +1,10 @@
 "use server"
 
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 export async function signOut() {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.signOut()
 
   if (error) {
@@ -16,7 +16,7 @@ export async function signOut() {
 }
 
 export async function deleteAccount() {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase.auth.getUser()
 
