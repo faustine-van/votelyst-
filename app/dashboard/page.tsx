@@ -16,6 +16,7 @@ import { type Poll } from "@/app/types/database"
 import { useAuth } from "@/app/context/AuthContext"
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const { user, session, loading: authLoading, signOut } = useAuth();
@@ -127,8 +128,26 @@ export default function DashboardPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-background"
+    >
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
@@ -181,149 +200,178 @@ export default function DashboardPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <DashboardAnalytics />
-          </TabsContent>
+          <motion.div layout>
+            <TabsContent value="overview" className="space-y-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <DashboardAnalytics />
+              </motion.div>
+            </TabsContent>
 
-          <TabsContent value="polls" className="space-y-6">
-            {/* Stats Overview */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Polls</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{polls.length}</div>
-                  <p className="text-xs text-muted-foreground">Your active polls</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="polls" className="space-y-6">
+              {/* Stats Overview */}
+              <motion.div 
+                className="grid md:grid-cols-3 gap-6"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <motion.div variants={itemVariants}>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Polls</CardTitle>
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{polls.length}</div>
+                      <p className="text-xs text-muted-foreground">Your active polls</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Votes</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalVotes}</div>
-                  <p className="text-xs text-muted-foreground">Across all polls</p>
-                </CardContent>
-              </Card>
+                <motion.div variants={itemVariants}>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Votes</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{totalVotes}</div>
+                      <p className="text-xs text-muted-foreground">Across all polls</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg. Votes per Poll</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {polls.length > 0 ? Math.round(totalVotes / polls.length) : 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Average engagement</p>
-                </CardContent>
-              </Card>
-            </div>
+                <motion.div variants={itemVariants}>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Avg. Votes per Poll</CardTitle>
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {polls.length > 0 ? Math.round(totalVotes / polls.length) : 0}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Average engagement</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
 
-            {/* Polls List */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-foreground">Your Polls</h3>
-                <Link href="/polls/new">
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Poll
-                  </Button>
-                </Link>
-              </div>
-
-              {polls.length > 0 ? (
-                <div className="grid gap-4">
-                  {polls.map((poll) => (
-                    <Card key={poll.id}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1 flex-1">
-                            <CardTitle className="text-lg text-balance">{poll.question}</CardTitle>
-                            {poll.description && (
-                              <CardDescription className="text-pretty">{poll.description}</CardDescription>
-                            )}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={"default"}>active</Badge>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <Link href={`/polls/${poll.id}/results`}>
-                                  <DropdownMenuItem>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Results
-                                  </DropdownMenuItem>
-                                </Link>
-                                <SharePollDialog
-                                  pollId={poll.id}
-                                  pollTitle={poll.question}
-                                  pollDescription={poll.description || ""}
-                                >
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                    <Share2 className="h-4 w-4 mr-2" />
-                                    Share Poll
-                                  </DropdownMenuItem>
-                                </SharePollDialog>
-                                <Link href={`/polls/${poll.id}/edit`}>
-                                  <DropdownMenuItem>
-                                    Edit Poll
-                                  </DropdownMenuItem>
-                                </Link>
-                                <DropdownMenuItem
-                                  onClick={() => handleDelete(poll.id)}
-                                  className="text-red-500"
-                                >
-                                  Delete Poll
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
+              {/* Polls List */}
+              <motion.div 
+                className="space-y-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-foreground">Your Polls</h3>
+                  <Link href="/polls/new">
+                    <Button variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Poll
+                    </Button>
+                  </Link>
                 </div>
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No polls yet</h3>
-                    <p className="text-muted-foreground mb-6">
-                      Create your first poll to get started!
-                    </p>
-                    <Link href="/polls/new">
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Poll
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="profile">
-            <UserProfileCard user={user} />
-          </TabsContent>
+                {polls.length > 0 ? (
+                  <motion.div 
+                    className="grid gap-4"
+                    variants={containerVariants}
+                  >
+                    {polls.map((poll) => (
+                      <motion.div key={poll.id} variants={itemVariants}>
+                        <Card>
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1 flex-1">
+                                <CardTitle className="text-lg text-balance">{poll.question}</CardTitle>
+                                {poll.description && (
+                                  <CardDescription className="text-pretty">{poll.description}</CardDescription>
+                                )}
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={"default"}>active</Badge>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <Link href={`/polls/${poll.id}/results`}>
+                                      <DropdownMenuItem>
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View Results
+                                      </DropdownMenuItem>
+                                    </Link>
+                                    <SharePollDialog
+                                      pollId={poll.id}
+                                      pollTitle={poll.question}
+                                      pollDescription={poll.description || ""}
+                                    >
+                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Share2 className="h-4 w-4 mr-2" />
+                                        Share Poll
+                                      </DropdownMenuItem>
+                                    </SharePollDialog>
+                                    <Link href={`/polls/${poll.id}/edit`}>
+                                      <DropdownMenuItem>
+                                        Edit Poll
+                                      </DropdownMenuItem>
+                                    </Link>
+                                    <DropdownMenuItem
+                                      onClick={() => handleDelete(poll.id)}
+                                      className="text-red-500"
+                                    >
+                                      Delete Poll
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <Card>
+                    <CardContent className="text-center py-12">
+                      <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No polls yet</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Create your first poll to get started!
+                      </p>
+                      <Link href="/polls/new">
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Poll
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
+              </motion.div>
+            </TabsContent>
 
-          <TabsContent value="settings">
-            <UserSettings />
-          </TabsContent>
+            <TabsContent value="profile">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <UserProfileCard user={user} />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <UserSettings />
+              </motion.div>
+            </TabsContent>
+          </motion.div>
         </Tabs>
       </div>
-    </div>
+    </motion.div>
   )
 }

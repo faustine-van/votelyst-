@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { getAnonId } from '@/lib/utils';
 import { SharePollDialog } from '@/components/share-poll-dialog';
+import { motion } from 'framer-motion';
 
 interface PollOption {
   id: string;
@@ -297,7 +298,12 @@ export function PollVotingPage({ pollId }: PollVotingPageProps) {
   const canVote = !poll.requires_login || !!user;
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-background"
+    >
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
@@ -365,17 +371,19 @@ export function PollVotingPage({ pollId }: PollVotingPageProps) {
 
           {/* Voting Status */}
           {hasVoted && (
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">You have already voted on this poll</span>
-                </div>
-                <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-                  Your vote has been recorded. You can view the results or share this poll with others.
-                </p>
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">You have already voted on this poll</span>
+                  </div>
+                  <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                    Your vote has been recorded. You can view the results or share this poll with others.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {/* Authentication Notice */}
@@ -418,8 +426,9 @@ export function PollVotingPage({ pollId }: PollVotingPageProps) {
                 disabled={!canVote || hasVoted}
               >
                 {poll.options.map((option) => (
-                  <div 
+                  <motion.div 
                     key={option.id} 
+                    whileHover={{ scale: 1.02 }}
                     className={`flex items-center space-x-2 p-3 rounded-lg border transition-colors ${
                       hasVoted && option.id === userVote?.option_id
                         ? 'border-green-500 bg-green-50 dark:bg-green-950'
@@ -448,19 +457,21 @@ export function PollVotingPage({ pollId }: PollVotingPageProps) {
                         </span>
                       )}
                     </Label>
-                  </div>
+                  </motion.div>
                 ))}
               </RadioGroup>
 
               {canVote && !hasVoted && (
-                <Button 
-                  onClick={handleVote} 
-                  disabled={!selectedOption || voting}
-                  className="w-full"
-                  size="lg"
-                >
-                  {voting ? 'Submitting Vote...' : 'Submit Vote'}
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    onClick={handleVote} 
+                    disabled={!selectedOption || voting}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {voting ? 'Submitting Vote...' : 'Submit Vote'}
+                  </Button>
+                </motion.div>
               )}
             </CardContent>
           </Card>
@@ -513,6 +524,6 @@ export function PollVotingPage({ pollId }: PollVotingPageProps) {
           </Card>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
