@@ -1,3 +1,5 @@
+"use client";
+
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { PollWithOptions } from "@/app/types/database";
 import useSWR from "swr";
@@ -12,7 +14,7 @@ const fetchPolls = async (userId: string | undefined): Promise<PollWithOptions[]
 
   const { data: polls, error } = await supabase
     .from("polls")
-    .select("*, poll_options(*)")
+    .select("*, options:poll_options(*)")
     .eq("user_id", userId);
 
   if (error) {
