@@ -1,9 +1,9 @@
 import { signOut } from '@/app/(auth)/actions';
-import { createClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(),
+  createSupabaseServerClient: jest.fn(),
 }));
 
 jest.mock('next/navigation', () => ({
@@ -16,7 +16,7 @@ describe('signOut action', () => {
   });
   it('should sign out and redirect on success', async () => {
     const signOutMock = jest.fn().mockResolvedValue({ error: null });
-    (createClient as jest.Mock).mockReturnValue({
+    (createSupabaseServerClient as jest.Mock).mockReturnValue({
       auth: { signOut: signOutMock },
     });
 
@@ -29,7 +29,7 @@ describe('signOut action', () => {
   it('should log an error on failure', async () => {
     const error = new Error('Sign out failed');
     const signOutMock = jest.fn().mockResolvedValue({ error });
-    (createClient as jest.Mock).mockReturnValue({
+    (createSupabaseServerClient as jest.Mock).mockReturnValue({
       auth: { signOut: signOutMock },
     });
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});

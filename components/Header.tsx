@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { BarChart3 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
+import { motion } from 'framer-motion';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
@@ -37,9 +38,19 @@ export default function Header() {
                   <Button variant='outline'>Dashboard</Button>
                 </Link> */}
                 <Link href="/polls">
-                  <Button variant='ghost'>My Polls</Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button variant='ghost'>My Polls</Button>
+                  </motion.div>
                 </Link>
-                <Button onClick={handleSignOut}>Sign Out</Button>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button onClick={handleSignOut}>Sign Out</Button>
+                </motion.div>
                 <span className="text-sm text-muted-foreground">
                   Welcome, {user.email?.split('@')[0]}
                 </span>
@@ -48,10 +59,20 @@ export default function Header() {
               // Unauthenticated user
               <>
                 <Link href="/login">
-                  <Button variant='outline'>Sign In</Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button variant='outline'>Sign In</Button>
+                  </motion.div>
                 </Link>
                 <Link href="/register">
-                  <Button>Get Started</Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button>Get Started</Button>
+                  </motion.div>
                 </Link>
               </>
             )}
