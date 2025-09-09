@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ignore any file with :Zone.Identifier in its name
+*:Zone.Identifier

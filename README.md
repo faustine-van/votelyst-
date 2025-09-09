@@ -120,4 +120,5 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ![PR Review part 2](screenshots/pr_review_part2.png)
 
 ### IDE Review Suggestions
-![IDE Review](screenshots/ide_feedback.png)
+![IDE Review](screenshots/ide_feedback_1.png)
+![IDE Review](screenshots/ide_feedback_2.png)
