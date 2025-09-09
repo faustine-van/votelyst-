@@ -1,48 +1,40 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useAuth } from "@/app/context/AuthContext";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { PollWithOptions } from "@/app/types/database";
+import useSWR from "swr";
+import { useAuth } from "@/app/context/AuthContext";
 
-export function usePolls() {
+const supabase = createSupabaseClient();
+
+const fetchPolls = async (userId: string | undefined): Promise<PollWithOptions[]> => {
+  if (!userId) {
+    return [];
+  }
+
+  const { data: polls, error } = await supabase
+    .from("polls")
+    .select("*, poll_options(*)")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return polls || [];
+};
+
+export const usePolls = () => {
   const { user, loading: authLoading } = useAuth();
-  const [polls, setPolls] = useState<PollWithOptions[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchPolls() {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+  const {
+    data: polls,
+    error,
+    isLoading,
+  } = useSWR<PollWithOptions[]>(user ? `polls-${user.id}` : null, () => fetchPolls(user?.id));
 
-      try {
-        const supabase = createSupabaseClient();
-        const { data: pollsData, error: pollsError } = await supabase
-          .from("polls")
-          .select("*, options:poll_options(*)")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (pollsError) {
-          throw pollsError;
-        }
-
-        setPolls(pollsData || []);
-      } catch (err) {
-        console.error("Error fetching polls:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (!authLoading) {
-      fetchPolls();
-    }
-  }, [user, authLoading]);
-
-  return { user, polls, loading, error, authLoading };
-}
+  return {
+    polls: polls || [],
+    loading: isLoading, // for compatibility
+    error: error ? error.message : null,
+    user,
+    authLoading,
+  };
+};
