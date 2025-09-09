@@ -1,67 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Votelyst - A Modern Polling Application
+
+Votelyst is a full-stack polling application built with Next.js and Supabase. It allows users to create, manage, and vote on polls, with real-time results and a comprehensive user dashboard.
+
+## Features
+
+- **User Authentication**: Secure sign-up, login, and session management powered by Supabase Auth.
+- **Poll Management**: Create, edit, and delete polls.
+- **Public & Private Polls**: Option to require user login for voting.
+- **Real-time Voting**: Cast votes and see results update instantly.
+- **Dashboard**: A central hub for users to view their polls, analytics, and manage their profile.
+- **Analytics**: Visualize poll results with interactive charts.
+- **Responsive UI**: Built with Tailwind CSS and Shadcn/UI for a clean and modern user experience on all devices.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Backend & Database**: [Supabase](https://supabase.io/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [Shadcn/UI](https://ui.shadcn.com/)
+- **Data Fetching**: [SWR](https://swr.vercel.app/)
+- **Testing**: [Jest](https://jestjs.io/) & [React Testing Library](https://testing-library.com/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 
 ## Getting Started
 
-First, run the development server:
+Follow these instructions to get a local copy up and running.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
+
+- Node.js (v18.0.0 or newer)
+- npm
+- A Supabase account ([Create one for free](https://supabase.com/))
+
+### Installation & Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/votelyst.git
+    cd votelyst
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Supabase:**
+    - Go to your [Supabase Dashboard](https://app.supabase.io) and create a new project.
+    - Navigate to the **SQL Editor** in your new project.
+    - Copy the contents of `supabase/schema.sql` and run it to create the database tables.
+    - Copy the contents of `supabase/rls.sql` and run it to set up Row Level Security policies.
+    - Go to **Project Settings** > **API**.
+    - Find your **Project URL** and **anon public key**.
+
+4.  **Configure Environment Variables:**
+    - Create a `.env.local` file in the root of the project by copying the example file:
+      ```bash
+      cp .env.local.example .env.local
+      ```
+    - Add your Supabase URL and anon key to the `.env.local` file:
+      ```
+      NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+      NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+      ```
+
+5.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses Jest and React Testing Library for unit and integration tests. To run the test suite:
 
-## Learn More
+```bash
+npm test
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The project follows the Next.js App Router structure.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+/
+├── app/
+│   ├── (auth)/         # Authentication routes (login, register)
+│   ├── (main)/         # Main application routes (dashboard, polls)
+│   ├── api/            # API routes
+│   ├── context/        # React Context providers (e.g., AuthContext)
+│   ├── types/          # TypeScript type definitions
+│   └── utils/          # Utility functions
+├── components/
+│   ├── ui/             # Shadcn/UI components
+│   └── *.tsx           # Reusable application components
+├── lib/
+│   └── supabase/       # Supabase client, server, and middleware helpers
+├── supabase/
+│   ├── schema.sql      # Database table definitions
+│   └── rls.sql         # Row Level Security policies
+├── __tests__/
+│   ├── actions/        # Tests for server actions
+│   └── integration/    # Integration tests
+├── public/             # Static assets
+└── screenshots/        # Screenshots for README
+```
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## CodeRabbit PR Review Screenshots
 
+### PR Review on GitHub
+![PR Review part 1](screenshots/pr_review_part1.png)\
+![PR Review part 2](screenshots/pr_review_part2.png)
 
-votelyst/
-├─ app/                  # Next.js 13+ app directory
-│  ├─ layout.tsx         # Root layout
-│  ├─ page.tsx           # Home page (maybe list polls)
-│  ├─ globals.css        # Global styles
-│  ├─ components/        # Reusable components (Shadcn UI here)
-│  │  ├─ Navbar.tsx
-│  │  ├─ Footer.tsx
-│  │  ├─ Button.tsx
-│  │  └─ Card.tsx
-│  ├─ auth/              # Authentication pages
-│  │  ├─ login/page.tsx
-│  │  └─ register/page.tsx
-│  ├─ polls/             # Polls-related pages
-│  │  ├─ page.tsx        # List polls
-│  │  ├─ [id]/page.tsx   # Poll details
-│  │  └─ create/page.tsx # Create new poll
-│  └─ ui/                # Shadcn component wrappers & design system
-│     ├─ Alert.tsx
-│     ├─ Modal.tsx
-│     └─ Form.tsx
-├─ public/               # Static assets
-│  └─ images/
-├─ styles/
-│  └─ tailwind.css       # Tailwind base
-├─ package.json
-├─ next.config.js
-└─ tsconfig.json
+### IDE Review Suggestions
+![IDE Review](screenshots/ide_feedback.png)
