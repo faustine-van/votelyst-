@@ -36,7 +36,19 @@ export function DashboardClient({ user, initialPolls, initialTotalVotes }: Dashb
       const supabase = createSupabaseClient();
       const { error } = await supabase.from('polls').delete().eq('id', pollId);
       if (error) throw error;
-      setPolls(polls.filter((p) => p.id !== pollId));
+      setPolls((prev) => prev.filter((p) => p.id !== pollId));
+
+      // Recalculate total votes for remaining polls
+      const remainingIds = polls.filter((p) => p.id !== pollId).map((p) => p.id);
+      if (remainingIds.length === 0) {
+        setTotalVotes(0);
+      } else {
+        const { count, error: countErr } = await supabase
+          .from('votes')
+          .select('*', { count: 'planned', head: true })
+          .in('poll_id', remainingIds);
+        if (!countErr) setTotalVotes(count ?? 0);
+      }
       toast.success('Poll deleted successfully');
     } catch (error) {
       console.error("Error deleting poll:", error);
@@ -214,12 +226,13 @@ export function DashboardClient({ user, initialPolls, initialTotalVotes }: Dashb
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <Link href={`/polls/${poll.id}/results`}>
-                                      <DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/polls/${poll.id}/results`}>
                                         <Eye className="h-4 w-4 mr-2" />
                                         View Results
-                                      </DropdownMenuItem>
-                                    </Link>
+                                      </Link>
+                                    </DropdownMenuItem>
+
                                     <SharePollDialog
                                       pollId={poll.id}
                                       pollQuestion={poll.question}
@@ -230,11 +243,13 @@ export function DashboardClient({ user, initialPolls, initialTotalVotes }: Dashb
                                         Share Poll
                                       </DropdownMenuItem>
                                     </SharePollDialog>
-                                    <Link href={`/polls/${poll.id}/edit`}>
-                                      <DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+
+                                      <Link href={`/polls/${poll.id}/edit`}>
                                         Edit Poll
-                                      </DropdownMenuItem>
-                                    </Link>
+                                      </Link>
+                                    </DropdownMenuItem>
+
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.preventDefault();
