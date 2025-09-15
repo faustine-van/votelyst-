@@ -68,16 +68,23 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1"
+              className="mt-1 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-              style={{ top: "24px" }}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 top-6"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
+            <div className="flex items-center justify-between mt-2">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
           </div>
           <div>
             <Button type="submit" className="w-full" disabled={loading}>

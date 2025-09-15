@@ -1,28 +1,45 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, AlertCircle, Lock, ArrowLeft, BarChart3 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { createPoll } from '../actions';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { X, AlertCircle, Lock, ArrowLeft, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { createPoll } from "../actions";
+import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from 'sonner';
-import { useAuth } from '@/app/context/AuthContext';
-import Link from 'next/link';
-import { Switch } from '@/components/ui/switch';
+import { toast } from "sonner";
+import { useAuth } from "@/app/context/AuthContext";
+import Link from "next/link";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function NewPollPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [options, setOptions] = useState(['', '']);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [options, setOptions] = useState(["", ""]);
   const [requiresLogin, setRequiresLogin] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"draft" | "active" | "closed">("active");
+  const [pollType, setPollType] = useState<"single_choice" | "multiple_choice">(
+    "single_choice"
+  );
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -31,7 +48,7 @@ export default function NewPollPage() {
   };
 
   const addOption = () => {
-    setOptions([...options, '']);
+    setOptions([...options, ""]);
   };
 
   const removeOption = (index: number) => {
@@ -41,21 +58,21 @@ export default function NewPollPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (title.trim() === '') {
-        toast.error('Poll title cannot be empty.');
-        return;
-    }
-    
-    const filteredOptions = options.filter((option) => option.trim() !== '');
-    if (filteredOptions.length < 2) {
-      toast.error('Please provide at least two options.');
+
+    if (title.trim() === "") {
+      toast.error("Poll title cannot be empty.");
       return;
     }
-    
+
+    const filteredOptions = options.filter((option) => option.trim() !== "");
+    if (filteredOptions.length < 2) {
+      toast.error("Please provide at least two options.");
+      return;
+    }
+
     if (new Set(filteredOptions).size !== filteredOptions.length) {
-        toast.error('Poll options must be unique.');
-        return;
+      toast.error("Poll options must be unique.");
+      return;
     }
 
     setLoading(true);
@@ -67,13 +84,29 @@ export default function NewPollPage() {
           setLoading(false);
           return;
         }
-        await createPoll(null, title, description, filteredOptions, false);
-        toast.success('Poll created successfully');
-        router.push('/');
+        await createPoll(
+          null,
+          title,
+          description,
+          filteredOptions,
+          false,
+          status,
+          pollType
+        );
+        toast.success("Poll created successfully");
+        router.push("/");
       } else {
-        await createPoll(user.id, title, description, filteredOptions, requiresLogin);
-        toast.success('Poll created successfully');
-        router.push('/dashboard');
+        await createPoll(
+          user.id,
+          title,
+          description,
+          filteredOptions,
+          requiresLogin,
+          status,
+          pollType
+        );
+        toast.success("Poll created successfully");
+        router.push("/dashboard");
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -121,7 +154,7 @@ export default function NewPollPage() {
             {user && (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
-                  {user.email?.split('@')[0]}
+                  {user.email?.split("@")[0]}
                 </span>
               </div>
             )}
@@ -135,8 +168,15 @@ export default function NewPollPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>You are not logged in</AlertTitle>
             <AlertDescription>
-              You are creating a public poll. Anyone with the link will be able to vote. 
-              <Link href="/auth/login?redirectedFrom=/polls/new" className="underline ml-2">Sign in</Link> for more options.
+              You are creating a public poll. Anyone with the link will be able
+              to vote.
+              <Link
+                href="/auth/login?redirectedFrom=/polls/new"
+                className="underline ml-2"
+              >
+                Sign in
+              </Link>{" "}
+              for more options.
             </AlertDescription>
           </Alert>
         )}
@@ -144,68 +184,120 @@ export default function NewPollPage() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Create a New Poll</CardTitle>
-            <CardDescription>Fill out the details below to create your poll.</CardDescription>
+            <CardDescription>
+              Fill out the details below to create your poll.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <fieldset disabled={loading} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Poll Title</Label>
-                    <Input
-                      id="title"
-                      type="text"
-                      placeholder="What's your question?"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Poll Title</Label>
+                  <Input
+                    id="title"
+                    type="text"
+                    placeholder="What's your question?"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description (Optional)</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Add more details about your poll..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Add more details about your poll..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Options</Label>
-                    {options.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          type="text"
-                          placeholder={`Option ${index + 1}`}
-                          value={option}
-                          onChange={(e) => handleOptionChange(index, e.target.value)}
-                          required
-                        />
-                        {options.length > 2 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeOption(index)}
-                            className="text-muted-foreground"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                     <Button type="button" variant="outline" onClick={addOption} className="mt-2">
-                          Add Option
-                      </Button>
-                  </div>
-
-                  {user && (
-                    <div className="flex items-center space-x-2 pt-4">
-                      <Switch id="requires-login" checked={requiresLogin} onCheckedChange={setRequiresLogin} />
-                      <Label htmlFor="requires-login">Require users to log in to vote (Private Poll)</Label>
+                <div className="space-y-2">
+                  <Label>Options</Label>
+                  {options.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder={`Option ${index + 1}`}
+                        value={option}
+                        onChange={(e) =>
+                          handleOptionChange(index, e.target.value)
+                        }
+                        required
+                      />
+                      {options.length > 2 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeOption(index)}
+                          className="text-muted-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-                  )}
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addOption}
+                    className="mt-2"
+                  >
+                    Add Option
+                  </Button>
+                </div>
+
+                {user && (
+                  <div className="flex items-center space-x-2 pt-4">
+                    <Switch
+                      id="requires-login"
+                      checked={requiresLogin}
+                      onCheckedChange={setRequiresLogin}
+                    />
+                    <Label htmlFor="requires-login">
+                      Require users to log in to vote (Private Poll)
+                    </Label>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="poll-type">Poll Type</Label>
+                    <Select
+                      value={pollType}
+                      onValueChange={(value) => setPollType(value as any)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select poll type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single_choice">
+                          Single Choice
+                        </SelectItem>
+                        <SelectItem value="multiple_choice">
+                          Multiple Choice
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={status}
+                      onValueChange={(value) => setStatus(value as any)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </fieldset>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
@@ -218,7 +310,7 @@ export default function NewPollPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Poll'}
+                  {loading ? "Creating..." : "Create Poll"}
                 </Button>
               </div>
             </form>

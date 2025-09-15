@@ -45,7 +45,7 @@ describe('Poll Actions', () => {
         return { insert: jest.fn() }; // Default mock
       });
 
-      const result = await createPoll('user-1', 'Test Poll', 'A description', ['Option 1'], false);
+      const result = await createPoll('user-1', 'Test Poll', 'A description', ['Option 1'], false, 'active', 'single_choice');
 
       expect(supabaseMock.from).toHaveBeenCalledWith('polls');
       expect(pollFromMock.insert).toHaveBeenCalledWith(expect.objectContaining({ question: 'Test Poll' }));
@@ -62,7 +62,7 @@ describe('Poll Actions', () => {
         };
         supabaseMock.from.mockReturnValue({ insert: jest.fn().mockReturnValue(pollInsertMock) });
 
-        await expect(createPoll('user-1', 'Test Poll', null, ['Opt 1', 'Opt 2'], false)).rejects.toThrow(pollError);
+        await expect(createPoll('user-1', 'Test Poll', null, ['Opt 1', 'Opt 2'], false, 'active', 'single_choice')).rejects.toThrow(pollError);
     });
   });
 
@@ -120,7 +120,7 @@ describe('Poll Actions', () => {
             { option_text: 'New Option 2' }, // Insert
         ];
 
-        await updatePoll('poll-1', 'Updated Question', 'New Desc', optionsToUpdate, false);
+        await updatePoll('poll-1', 'Updated Question', 'New Desc', optionsToUpdate, false, 'active', 'single_choice');
 
         expect(supabaseMock.from).toHaveBeenCalledWith('polls');
         expect(pollUpdateMock.eq).toHaveBeenCalledWith('id', 'poll-1');

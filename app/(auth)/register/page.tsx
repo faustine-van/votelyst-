@@ -4,7 +4,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseClient } from "@/lib/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ export default function RegisterPage() {
   };
 
   const handleResendConfirmation = async () => {
-    const supabase = createClient();
+    const supabase = createSupabaseClient();
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,

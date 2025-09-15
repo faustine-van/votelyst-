@@ -12,8 +12,11 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - auth (auth routes)
+     * - forgot-password (forgot password route)
+     * - reset-password (reset password route)
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|auth|p|).*)",
+    "/((?!_next/static|_next/image|favicon.ico|auth|forgot-password|reset-password|p|).*)",
   ],
 };

@@ -48,11 +48,15 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // refreshing the session will automatically handle detecting guest sessions and returning
-  // null if the user is not signed in
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // refreshing the session will automatically handle detecting guest sessions and returning
+    // null if the user is not signed in
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+  } catch (error) {
+    // ignore the error
+  }
 
   return supabaseResponse
 }

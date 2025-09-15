@@ -20,6 +20,7 @@ import { X, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function EditPollPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function EditPollPage({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [requiresLogin, setRequiresLogin] = useState(false);
+  const [status, setStatus] = useState<'draft' | 'active' | 'closed'>('active');
+  const [pollType, setPollType] = useState<'single_choice' | 'multiple_choice'>('single_choice');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -61,6 +64,8 @@ export default function EditPollPage({ params }: { params: Promise<{ id: string 
           setDescription(pollData.description || '');
           setOptions(pollData.options || [{ option_text: '' }, { option_text: '' }]);
           setRequiresLogin(pollData.requires_login);
+          setStatus(pollData.status);
+          setPollType(pollData.poll_type);
         } else {
           setError('Poll not found.');
         }
@@ -116,7 +121,7 @@ export default function EditPollPage({ params }: { params: Promise<{ id: string 
 
     if (poll) {
       try {
-        await updatePoll(poll.id, title, description, filteredOptions, requiresLogin);
+        await updatePoll(poll.id, title, description, filteredOptions, requiresLogin, status, pollType);
         toast.success('Poll updated successfully');
         router.push('/dashboard');
       } catch (error: any) {
@@ -284,6 +289,33 @@ export default function EditPollPage({ params }: { params: Promise<{ id: string 
                     Add Option
                   </Button>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="poll-type">Poll Type</Label>
+                      <Select value={pollType} onValueChange={(value) => setPollType(value as any)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select poll type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="single_choice">Single Choice</SelectItem>
+                          <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={status} onValueChange={(value) => setStatus(value as any)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 <div className="flex items-center space-x-2 pt-4">
                   <Switch id="requires-login" checked={requiresLogin} onCheckedChange={setRequiresLogin} />
                   <Label htmlFor="requires-login">Require users to log in to vote (Private Poll)</Label>

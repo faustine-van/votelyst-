@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { DashboardAnalytics } from "@/components/dashboard-analytics";
+import { DashboardAnalytics } from '../components/dashboard-analytics';
 import { BarChart3, ArrowLeft, Download, Filter, Lock } from "lucide-react";
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { createSupabaseClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 export default function AnalyticsPage() {
   const { user, loading } = useAuth();
@@ -18,6 +20,43 @@ export default function AnalyticsPage() {
       router.push('/login?redirectedFrom=/analytics');
     }
   }, [user, loading, router]);
+
+  const handleExport = async () => {
+    if (!user) return;
+
+    try {
+      const supabase = createSupabaseClient();
+      const { data: polls, error: pollsError } = await supabase
+        .from('polls')
+        .select('*, options(*), votes(*)')
+        .eq('user_id', user.id);
+
+      if (pollsError) throw pollsError;
+
+      const exportData = {
+        user: {
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name,
+        },
+        polls,
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+      const exportFileDefaultName = 'votelyst_analytics_data.json';
+
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      toast.success('Analytics data exported successfully');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast.error('Failed to export analytics data');
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -73,14 +112,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {user.email?.split('@')[0]}'s Analytics
-              </span>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>

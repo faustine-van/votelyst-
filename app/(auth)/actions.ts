@@ -15,6 +15,8 @@ export async function signOut() {
   return redirect("/")
 }
 
+import { createClient } from "@supabase/supabase-js";
+
 export async function deleteAccount() {
   const supabase = await createSupabaseServerClient()
 
@@ -25,7 +27,12 @@ export async function deleteAccount() {
     return
   }
 
-  const { error: deleteError } = await supabase.auth.admin.deleteUser(data.user.id)
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.user.id)
 
   if (deleteError) {
     console.error("Error deleting user:", deleteError)

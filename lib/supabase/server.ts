@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(signal?: AbortSignal) {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -31,20 +31,25 @@ export async function createSupabaseServerClient() {
           }
         },
       },
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, signal }),
+      }
     }
   );
 }
 
+import { cache } from 'react';
+
 // Helper function to get user on server side
-export async function getUser() {
-  const supabase = await createSupabaseServerClient();
+export const getUser = cache(async (signal?: AbortSignal) => {
+  const supabase = await createSupabaseServerClient(signal);
   const { data: { user } } = await supabase.auth.getUser();
   return user;
-}
+});
 
 // Helper function to get session on server side
-export async function getSession() {
-  const supabase = await createSupabaseServerClient();
+export async function getSession(signal?: AbortSignal) {
+  const supabase = await createSupabaseServerClient(signal);
   const { data: { session } } = await supabase.auth.getSession();
   return session;
 }

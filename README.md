@@ -18,9 +18,18 @@ Votelyst is a full-stack polling application built with Next.js and Supabase. It
 - **Backend & Database**: [Supabase](https://supabase.io/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [Shadcn/UI](https://ui.shadcn.com/)
-- **Data Fetching**: [SWR](https://swr.vercel.app/)
+- **Data Fetching**: Next.js 15 (Server Components)
 - **Testing**: [Jest](https://jestjs.io/) & [React Testing Library](https://testing-library.com/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
+
+## Dashboard Refactoring: From Client to Server
+
+The user dashboard has been significantly refactored to leverage the latest features in Next.js, moving from a client-side rendering (CSR) approach to a server-centric model.
+
+-   **Server Component Adoption**: The main dashboard page (`app/dashboard/page.tsx`) is now a Server Component. It handles all data fetching on the server, including retrieving user-specific polls and vote counts from Supabase.
+-   **Improved Performance & Security**: By fetching data on the server, we reduce the client-side JavaScript bundle size and eliminate client-side loading spinners for the initial page load. This also improves security, as database interactions are handled on the server.
+-   **Separation of Concerns**: All interactive UI, such as tabs and action buttons, has been extracted into a dedicated Client Component (`app/dashboard/DashboardClient.tsx`). This component receives the pre-fetched data as props from its parent Server Component.
+-   **Enhanced Error Handling**: The dashboard now includes more robust error handling for data fetching and user actions like signing out and deleting polls, providing a better user experience.
 
 ## Getting Started
 
@@ -116,7 +125,7 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## CodeRabbit PR Review Screenshots
 
 ### PR Review on GitHub
-![PR Review part 1](screenshots/pr_review_part1.png)\
+![PR Review part 1](screenshots/pr_review_part1.png)
 ![PR Review part 2](screenshots/pr_review_part2.png)
 
 ### IDE Review Suggestions

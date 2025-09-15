@@ -17,6 +17,13 @@ export type Poll = {
   requires_login: boolean;
   created_at: string;
   updated_at: string;
+  status: 'draft' | 'active' | 'closed';
+  start_date?: string;
+  end_date?: string;
+  poll_type: 'single_choice' | 'multiple_choice';
+  view_count: number;
+  votes?: Vote[];
+  options?: PollOption[];
 };
 
 // Poll option type
@@ -26,6 +33,7 @@ export type PollOption = {
   option_text: string;
   created_at: string;
   updated_at: string;
+  vote_count: number;
 };
 
 // Vote type

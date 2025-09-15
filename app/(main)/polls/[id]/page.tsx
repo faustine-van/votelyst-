@@ -1,5 +1,5 @@
 // pages/polls/[id]/page.tsx
-import { PollVotingPage } from '@/components/PollVotingPage';
+import { PollVotingPage } from '../components/PollVotingPage';
 import { Metadata } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
