@@ -3,10 +3,11 @@
 import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { BarChart3, Sparkles, Menu, X } from 'lucide-react';
+import { BarChart3, Sparkles, Menu, X, Plus } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { UserNav } from './UserNav';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { user, loading } = useAuth();
@@ -74,8 +75,8 @@ export default function Header() {
 
   return (
     <motion.header 
-      // style={{ backgroundColor: 'var(--foreground)', color: 'var(--background)' }}
-      className="sticky top-0 z-50  bg-card/80 backdrop-blur-lg shadow-sm"
+      className="sticky top-0 z-50 border-b border-slate-200 shadow-sm"
+      style={{ backgroundColor: '#f0f2f5' }}
       variants={headerVariants}
       initial="hidden"
       animate="visible"
@@ -94,9 +95,9 @@ export default function Header() {
                     rotate: 360,
                     transition: { duration: 0.6 }
                   }}
-                  className="p-2 bg-gradient-to-br from-primary to-primary/70 rounded-xl shadow-lg"
+                  className="p-2.5 bg-white rounded-xl shadow-lg border border-slate-200/50"
                 >
-                  <BarChart3 className="h-6 w-6 text-primary-foreground" />
+                  <BarChart3 className="h-6 w-6 text-slate-700" />
                 </motion.div>
                 <motion.div
                   className="absolute -top-1 -right-1"
@@ -110,13 +111,13 @@ export default function Header() {
                     ease: "linear"
                   }}
                 >
-                  <Sparkles className="h-3 w-3 text-primary" />
+                  <Sparkles className="h-3 w-3 text-blue-600" />
                 </motion.div>
               </div>
               
               <Link href="/" className="group">
                 <motion.h1 
-                  className="text-2xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
+                  className="text-2xl font-bold text-slate-800"
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
@@ -127,7 +128,7 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             {user && (
-              <nav className="hidden md:flex items-center gap-1">
+              <nav className="hidden md:flex items-center gap-2">
                 <motion.div
                   custom={0}
                   variants={menuItemVariants}
@@ -138,7 +139,7 @@ export default function Header() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                      className="text-slate-600 hover:text-slate-800 hover:bg-white/70 border border-transparent hover:border-slate-200 transition-all duration-200 rounded-lg"
                     >
                       My Polls
                     </Button>
@@ -155,7 +156,7 @@ export default function Header() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                      className="text-slate-600 hover:text-slate-800 hover:bg-white/70 border border-transparent hover:border-slate-200 transition-all duration-200 rounded-lg"
                     >
                       Dashboard
                     </Button>
@@ -166,15 +167,15 @@ export default function Header() {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {loading ? (
               <motion.div 
                 className="flex gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <div className="h-9 w-20 bg-muted animate-pulse rounded-md"></div>
-                <div className="h-9 w-24 bg-muted animate-pulse rounded-md"></div>
+                <div className="h-9 w-20 bg-slate-200 animate-pulse rounded-lg"></div>
+                <div className="h-9 w-24 bg-slate-200 animate-pulse rounded-lg"></div>
               </motion.div>
             ) : user ? (
               <motion.div 
@@ -186,12 +187,13 @@ export default function Header() {
                 <Link href="/polls/new">
                   <Button 
                     size="sm" 
-                    className="shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/80"
+                    className="shadow-md hover:shadow-lg transition-all duration-200 text-white border-0 rounded-lg"
                   >
                     <motion.span
                       whileHover={{ scale: 1.05 }}
                       className="flex items-center gap-2"
                     >
+                      <Plus className="h-4 w-4" />
                       Create Poll
                     </motion.span>
                   </Button>
@@ -209,7 +211,7 @@ export default function Header() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="hover:bg-primary/5 hover:border-primary/20 transition-all duration-200"
+                    className="hover:bg-white/70 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-800 transition-all duration-200 rounded-lg"
                   >
                     <motion.span whileHover={{ scale: 1.05 }}>
                       Sign In
@@ -219,7 +221,7 @@ export default function Header() {
                 <Link href="/register">
                   <Button 
                     size="sm"
-                    className="shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/80"
+                    className="shadow-md hover:shadow-lg transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg"
                   >
                     <motion.span whileHover={{ scale: 1.05 }}>
                       Get Started
@@ -236,7 +238,7 @@ export default function Header() {
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="hover:bg-primary/10"
+              className="hover:bg-white/50 border border-transparent hover:border-slate-200 text-slate-600 rounded-lg"
             >
               <motion.div
                 animate={{ rotate: isMobileMenuOpen ? 180 : 0 }}
@@ -259,37 +261,47 @@ export default function Header() {
           animate={isMobileMenuOpen ? "visible" : "hidden"}
           className="md:hidden overflow-hidden"
         >
-          <div className="py-4 space-y-3 border-t border-border mt-4">
+          <div className="py-4 space-y-3 border-t border-slate-200 mt-4">
             {user ? (
               <>
                 <Link href="/polls" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-slate-600 hover:text-slate-800 hover:bg-white/70 rounded-lg"
+                  >
                     My Polls
                   </Button>
                 </Link>
                 <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-slate-600 hover:text-slate-800 hover:bg-white/70 rounded-lg"
+                  >
                     Dashboard
                   </Button>
                 </Link>
                 <Link href="/polls/new" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-gradient-to-r from-primary to-primary/80">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                    <Plus className="h-4 w-4 mr-2" />
                     Create Poll
                   </Button>
                 </Link>
-                <div className="pt-2 border-t border-border">
+                <div className="pt-2 border-t border-slate-200">
                   <UserNav />
                 </div>
               </>
             ) : (
               <>
                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-slate-300 text-slate-700 hover:bg-white/70 rounded-lg"
+                  >
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-gradient-to-r from-primary to-primary/80">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
                     Get Started
                   </Button>
                 </Link>

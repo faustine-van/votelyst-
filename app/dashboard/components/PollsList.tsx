@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -64,7 +64,7 @@ const getStatusConfig = (status: string) => {
 };
 
 export function PollsList({ polls, updatingPollId, handleStatusCycle, handlePrivacyChange, handleDelete }: PollsListProps) {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -74,7 +74,7 @@ export function PollsList({ polls, updatingPollId, handleStatusCycle, handlePriv
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { 
       opacity: 0, 
       y: 20,
@@ -92,7 +92,7 @@ export function PollsList({ polls, updatingPollId, handleStatusCycle, handlePriv
     },
   };
 
-  const cardHoverVariants = {
+  const cardHoverVariants: Variants = {
     rest: { 
       scale: 1,
       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
